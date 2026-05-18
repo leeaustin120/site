@@ -376,6 +376,29 @@ a:hover {
 
 
 /* ================================================================
+   BOAT SCENE
+   ================================================================ */
+
+.section-boat {
+  margin-top: var(--section-gap);
+}
+
+#boatCanvas {
+  display:         block;
+  width:           100%;
+  height:          160px;
+  border-radius:   3px;
+  cursor:          default;
+  image-rendering: pixelated;   /* keeps block shapes crisp on scaled displays */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Canvas still shows the static scene; JS skips physics/wind updates */
+  #boatCanvas { opacity: 0.75; }
+}
+
+
+/* ================================================================
    RESPONSIVE — mobile (≤ 560px)
    ================================================================ */
 
