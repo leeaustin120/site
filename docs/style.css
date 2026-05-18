@@ -122,6 +122,8 @@ a:hover {
   max-width: var(--col-width);
   margin:    0 auto;
   padding:   0 var(--page-h-pad);
+  position:  relative;   /* NEW: keeps container above #skyCanvas */
+  z-index:   1;
 }
 
 
@@ -344,6 +346,8 @@ a:hover {
   margin-top:  var(--section-gap);
   border-top:  1px solid var(--color-border);
   padding:     2rem 0 3.5rem;
+  position:    relative;   /* NEW: keeps footer above #skyCanvas */
+  z-index:     1;
 }
 
 .footer-inner {
@@ -372,6 +376,27 @@ a:hover {
 .footer-copy {
   font-size: 0.78rem;
   color:     var(--color-secondary);
+}
+
+
+/* ================================================================
+   SKY SCENE — pixel background canvas (NEW)
+   Fixed behind all content; z-index layering:
+     #skyCanvas  z-index: 0  (above body bg, below content)
+     .container  z-index: 1
+     .site-footer z-index: 1
+   ================================================================ */
+
+#skyCanvas {
+  position:        fixed;
+  top:             0;
+  left:            0;
+  width:           100%;
+  height:          100%;
+  display:         block;
+  z-index:         0;
+  pointer-events:  none;
+  image-rendering: pixelated;
 }
 
 

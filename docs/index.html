@@ -9,6 +9,12 @@
 </head>
 <body>
 
+  <!-- ============================================================
+       SKY CANVAS (NEW)
+       Pixel background behind all content.  JS below drives it.
+       ============================================================ -->
+  <canvas id="skyCanvas" aria-hidden="true"></canvas>
+
   <div class="container">
 
     <nav class="site-nav">
@@ -219,6 +225,264 @@
       <span class="footer-copy">Austin Lee &middot; 2025</span>
     </div>
   </footer>
+
+  <!-- ============================================================
+       SKY SCENE ANIMATION (NEW)
+       Reads PST time on load and every 60 s.
+       Toggles day/night CSS variables and draws:
+         • Sky fill (day: #a8d8ea / night: #0f0f14)
+         • CSS-pixel grid overlay (graph-paper lines)
+         • Drifting blocky pixel clouds
+         • Blocky pixel sun (day, top-right) or crescent moon (night)
+         • Twinkling 2×2 star dots (night only)
+       #boatCanvas and its JS are completely untouched.
+       ============================================================ -->
+  <script>
+  (function () {
+    'use strict';
+
+    // ── Tuneable constants ──────────────────────────────────────
+    var P        = 4;    // CSS px per pixel unit
+    var GRID_PX  = 44;   // CSS px between grid lines
+    var N_CLOUDS = 5;
+    var N_STARS  = 90;
+
+    // ── Theme palettes ─────────────────────────────────────────
+    var THEME_DAY = {
+      bg:        '#a8d8ea',
+      text:      '#1a1a1a',
+      border:    '#c0d8e4',
+      secondary: '#3a5a6a',
+      mutedText: '#2a4a5a',
+    };
+    var THEME_NIGHT = {
+      bg:        '#0f0f14',
+      text:      '#e8e8e0',
+      border:    '#2a2a35',
+      secondary: '#888',
+      mutedText: '#aaa',
+    };
+
+    // ── Canvas setup ───────────────────────────────────────────
+    var canvas = document.getElementById('skyCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+
+    var W, H, dpr;
+    var clouds = [], stars = [];
+    var isDay  = true;
+
+    function resize() {
+      dpr = window.devicePixelRatio || 1;
+      W   = window.innerWidth;
+      H   = window.innerHeight;
+      canvas.width  = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      canvas.style.width  = W + 'px';
+      canvas.style.height = H + 'px';
+      initClouds();
+      initStars();
+    }
+
+    // ── Block helper (pixel-unit coordinates) ──────────────────
+    function blk(px, py, pw, ph, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(
+        Math.round(px * P), Math.round(py * P),
+        Math.round(pw * P), Math.round(ph * P)
+      );
+    }
+
+    // ── PST time check ─────────────────────────────────────────
+    function checkTime() {
+      var h = parseInt(
+        new Date().toLocaleString('en-US', {
+          timeZone: 'America/Los_Angeles',
+          hour:     'numeric',
+          hour12:   false,
+        }), 10
+      );
+      isDay = (h >= 7 && h < 20);
+      applyTheme();
+    }
+
+    function applyTheme() {
+      var root = document.documentElement;
+      var t    = isDay ? THEME_DAY : THEME_NIGHT;
+      root.style.setProperty('--color-bg',        t.bg);
+      root.style.setProperty('--color-text',       t.text);
+      root.style.setProperty('--color-border',     t.border);
+      root.style.setProperty('--color-secondary',  t.secondary);
+      root.style.setProperty('--color-muted-text', t.mutedText);
+    }
+
+    // ── Clouds ─────────────────────────────────────────────────
+    // Wide, flat blocky silhouette — groups of overlapping rectangles.
+    // Coordinates in pixel units relative to cloud origin.
+    var CLOUD_SHAPE = [
+      [0, 3, 11, 2],   // wide flat base
+      [1, 1,  5, 3],   // left main bump
+      [5, 0,  3, 2],   // center peak
+      [8, 1,  3, 2],   // right bump
+    ];
+
+    function makeCloud(scatter) {
+      var PW = W / P;
+      return {
+        x:     scatter ? Math.random() * (PW + 20) : PW + 15,
+        y:     3 + Math.random() * (H / P) * 0.40,
+        speed: 0.03 + Math.random() * 0.05,
+        s:     1 + Math.floor(Math.random() * 3),  // scale: 1×, 2×, or 3×
+      };
+    }
+
+    function initClouds() {
+      clouds = [];
+      for (var i = 0; i < N_CLOUDS; i++) clouds.push(makeCloud(true));
+    }
+
+    function updateDrawClouds() {
+      var color = isDay ? 'rgba(255,255,255,0.82)' : 'rgba(55,58,78,0.70)';
+      for (var i = 0; i < clouds.length; i++) {
+        var c = clouds[i];
+        c.x -= c.speed;
+        if (c.x + 14 * c.s < 0) clouds[i] = makeCloud(false);
+        for (var j = 0; j < CLOUD_SHAPE.length; j++) {
+          var b = CLOUD_SHAPE[j];
+          blk(c.x + b[0] * c.s, c.y + b[1] * c.s, b[2] * c.s, b[3] * c.s, color);
+        }
+      }
+    }
+
+    // ── Stars ──────────────────────────────────────────────────
+    function initStars() {
+      stars = [];
+      for (var i = 0; i < N_STARS; i++) {
+        stars.push({
+          x:     Math.floor(Math.random() * Math.floor(W  / 2)) * 2,
+          y:     Math.floor(Math.random() * Math.floor(H * 0.72 / 2)) * 2,
+          phase: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    function drawStars() {
+      if (isDay) return;
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        s.phase += 0.013;
+        ctx.globalAlpha = Math.max(0, 0.25 + Math.sin(s.phase) * 0.50);
+        ctx.fillStyle   = '#ffffff';
+        ctx.fillRect(s.x, s.y, 2, 2);   // 2×2 CSS px dot
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // ── Sun (top-right, day only) ──────────────────────────────
+    // 7×7 pixel-unit disc + 12 single-block rays.
+    var SUN_BODY = [
+      [2, 0, 3, 1], [1, 1, 5, 1],
+      [0, 2, 7, 1], [0, 3, 7, 1], [0, 4, 7, 1],
+      [1, 5, 5, 1], [2, 6, 3, 1],
+    ];
+    var SUN_RAYS = [
+      [3, -2, 1, 1], [3,  8, 1, 1],
+      [-2, 3, 1, 1], [8,  3, 1, 1],
+      [1, -1, 1, 1], [5, -1, 1, 1],
+      [-1, 1, 1, 1], [-1, 5, 1, 1],
+      [7,  1, 1, 1], [7,  5, 1, 1],
+      [1,  7, 1, 1], [5,  7, 1, 1],
+    ];
+
+    function drawSun() {
+      var ox = W / P - 14;
+      var oy = 4;
+      var c  = '#f9d84e';
+      for (var i = 0; i < SUN_BODY.length; i++) {
+        var b = SUN_BODY[i];
+        blk(ox + b[0], oy + b[1], b[2], b[3], c);
+      }
+      ctx.save();
+      ctx.globalAlpha = 0.65;
+      for (var i = 0; i < SUN_RAYS.length; i++) {
+        var r = SUN_RAYS[i];
+        blk(ox + r[0], oy + r[1], r[2], r[3], c);
+      }
+      ctx.restore();
+    }
+
+    // ── Moon (top-right, night only) ───────────────────────────
+    // Same 7×7 disc with a crescent cutout painted in night-bg color.
+    var MOON_BODY = [
+      [2, 0, 3, 1], [1, 1, 5, 1],
+      [0, 2, 7, 1], [0, 3, 7, 1], [0, 4, 7, 1],
+      [1, 5, 5, 1], [2, 6, 3, 1],
+    ];
+    var MOON_CUT = [
+      [4, 1, 2, 1], [3, 2, 4, 1], [3, 3, 4, 1],
+      [3, 4, 4, 1], [4, 5, 2, 1], [4, 6, 1, 1],
+    ];
+
+    function drawMoon() {
+      var ox = W / P - 14;
+      var oy = 4;
+      for (var i = 0; i < MOON_BODY.length; i++) {
+        var b = MOON_BODY[i];
+        blk(ox + b[0], oy + b[1], b[2], b[3], '#ddddc8');
+      }
+      for (var i = 0; i < MOON_CUT.length; i++) {
+        var mc = MOON_CUT[i];
+        blk(ox + mc[0], oy + mc[1], mc[2], mc[3], '#0f0f14');
+      }
+    }
+
+    // ── Grid overlay ───────────────────────────────────────────
+    function drawGrid() {
+      ctx.save();
+      ctx.strokeStyle = isDay
+        ? 'rgba(0,50,90,0.10)'
+        : 'rgba(180,200,255,0.06)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (var gx = 0; gx <= W; gx += GRID_PX) {
+        ctx.moveTo(gx + 0.5, 0);
+        ctx.lineTo(gx + 0.5, H);
+      }
+      for (var gy = 0; gy <= H; gy += GRID_PX) {
+        ctx.moveTo(0, gy + 0.5);
+        ctx.lineTo(W, gy + 0.5);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ── Main draw loop ─────────────────────────────────────────
+    function draw() {
+      ctx.save();
+      ctx.scale(dpr, dpr);
+
+      ctx.fillStyle = isDay ? '#a8d8ea' : '#0f0f14';
+      ctx.fillRect(0, 0, W, H);
+
+      drawStars();
+      drawGrid();
+      updateDrawClouds();
+
+      if (isDay) drawSun();
+      else       drawMoon();
+
+      ctx.restore();
+      requestAnimationFrame(draw);
+    }
+
+    // ── Boot ───────────────────────────────────────────────────
+    checkTime();
+    resize();
+    window.addEventListener('resize', function () { resize(); });
+    setInterval(checkTime, 60000);
+    requestAnimationFrame(draw);
+  })();
+  </script>
 
   <!-- ============================================================
        BOAT ANIMATION
