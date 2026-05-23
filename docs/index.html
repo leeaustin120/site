@@ -66,6 +66,18 @@
             goal of becoming an end-to-end product for evaluating vendor
             reliability and surfacing onboarding pain points.
           </p>
+          <div class="project-screenshots">
+            <figure class="project-screenshot">
+              <img src="Vendor Integration Intelligence Platform 1.png"
+                   alt="Application ingesting signals from various workstreams">
+              <figcaption>The application ingests signals from various workstreams and organizes them into structured vendor reviews.</figcaption>
+            </figure>
+            <figure class="project-screenshot">
+              <img src="Vendor Integration Intelligence Platform 2 Signal Feed.png"
+                   alt="Integration progress and health scores from workflow signal feeds">
+              <figcaption>Integration progress and health scores derived from workflow signal feeds, Jira tickets, Slack messages, and emails.</figcaption>
+            </figure>
+          </div>
           <p class="project-links">
             <a href="https://github.com/syntheticfinds/vendor_software_integration"
                target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -132,12 +144,17 @@
             <span class="project-title">Retail Payments Causal Inference Study</span>
             <span class="project-tags">Causal Inference &middot; Experimentation</span>
           </div>
-          <p class="project-client-note">Client-approved case study</p>
+          <p class="project-client-note">Client-approved case study &middot; Fortune 500 outdoor retailer</p>
           <p>
-            Evaluated whether low-cost in-store signage increased co-branded credit
-            card usage in targeted retail zones. Designed study around incremental
-            tender-share with a focus on scalable experimentation and real-world
-            decision-making.
+            Designed and analyzed a two-stage randomized experiment to evaluate whether
+            in-store signage increased co-branded credit card tender share across retail
+            departments. Randomized treatment at the store-day level, with activities as
+            within-day controls. Estimated intent-to-treat effects using a linear
+            probability model with store&times;day and activity fixed effects, weighted
+            least squares to address heteroskedasticity in proportion outcomes, and
+            clustered standard errors. Conducted robustness checks including
+            leave-one-store-out stability analysis and spillover testing across unsigned
+            departments.
           </p>
         </div>
 
@@ -152,10 +169,38 @@
           <p>
             Wildfires in California have become
             <a href="https://en.wikipedia.org/wiki/Palisades_Fire" target="_blank" rel="noopener noreferrer">increasingly frequent and severe</a>,
-            posing a significant threat to localities and the state's ecological systems.
-            Using meteorological data (temperature, humidity, wind speed, and other
-            weather patterns) we built models to predict wildfire occurrences.
+            posing significant threats to communities and ecosystems. Using meteorological
+            data from California's CIMIS weather station network&mdash;including
+            temperature, humidity, wind speed, and solar radiation&mdash;we built and
+            compared four models to predict wildfire occurrences: logistic regression,
+            random forest, and two feedforward neural network variants. A core challenge
+            was extreme class imbalance, with fire events representing only ~1% of 200k+
+            observations, which we addressed through class weight balancing and threshold
+            tuning. The random forest classifier emerged as the strongest performer, with
+            wind run ranking as the most predictive feature.
           </p>
+          <div class="project-screenshots">
+            <figure class="project-screenshot">
+              <img src="Fire Incidences Over Time.png"
+                   alt="Fire incidences over time">
+              <figcaption>Fire incidences over time across California.</figcaption>
+            </figure>
+            <figure class="project-screenshot">
+              <img src="Related Studies.png"
+                   alt="Related studies summary">
+              <figcaption>Related studies: Gaussian Naive Bayes models showed the strongest results in comparable Chinese wildfire prediction research, though reported accuracy metrics were unavailable.</figcaption>
+            </figure>
+            <figure class="project-screenshot">
+              <img src="Weather Stations and Fire event distribution mapping.png"
+                   alt="Weather station and fire event distribution mapping">
+              <figcaption>CIMIS weather station locations overlaid with historical fire event distribution.</figcaption>
+            </figure>
+            <figure class="project-screenshot">
+              <img src="Feature Importance.png"
+                   alt="Feature importance from random forest classifier">
+              <figcaption>Feature importance rankings from the random forest model, with wind run as the top predictor.</figcaption>
+            </figure>
+          </div>
         </div>
 
         <div class="project">
@@ -170,9 +215,20 @@
             Peer-to-peer lending represents a fundamental shift in how individuals
             access credit, enabling them to bypass traditional financial institutions
             and borrow directly through online marketplaces. Using Lending Club data,
-            this project investigates what financial factors drive credit pricing in
-            a decentralized marketplace.
+            this project investigates what financial factors drive credit pricing in a
+            decentralized marketplace. We specifically built an OLS regression model to
+            investigate which borrower characteristics and loan attributes drive interest
+            rate pricing. A univariate model on Lending Club's internal credit grade
+            explained over 90% of interest rate variance, revealing grade as a
+            near-black-box pricing mechanism.
           </p>
+          <div class="project-screenshots">
+            <figure class="project-screenshot" style="flex: 1 1 100%;">
+              <img src="Distribution of Loans, Debt to income ratio, and interest rates by loan grade.png"
+                   alt="Distribution of loans, debt-to-income ratio, and interest rates by loan grade">
+              <figcaption>Distribution of loans, debt-to-income ratio, and interest rates segmented by Lending Club loan grade.</figcaption>
+            </figure>
+          </div>
         </div>
 
         <div class="project">
@@ -229,6 +285,11 @@
             Python, implementing all six piece types with full legal move validation,
             check detection, castling, and pawn promotion.
           </p>
+          <div class="project-screenshots">
+            <figure class="project-screenshot" style="flex: 1 1 100%;">
+              <img src="Chess Game.png" alt="Chess game terminal screenshot">
+            </figure>
+          </div>
           <p class="project-links">
             <a href="https://github.com/leeaustin120/chess-game"
                target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -263,6 +324,79 @@
   <!-- ART SHOWCASE scripts (NEW) -->
   <script src="wikiart_index.js"></script>
   <script src="art-showcase.js"></script>
+
+  <!-- Project image tilt + lightbox -->
+  <script>
+  (function () {
+    'use strict';
+
+    var MAX_TILT = 10; // degrees
+
+    // Build lightbox once
+    var lb    = document.createElement('div');
+    lb.className = 'lightbox';
+    var lbImg = document.createElement('img');
+    lb.appendChild(lbImg);
+    document.body.appendChild(lb);
+
+    function closeLightbox() {
+      lb.classList.remove('lb-visible');
+      setTimeout(function () { lb.style.display = 'none'; }, 200);
+    }
+    lb.addEventListener('click', closeLightbox);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
+    // Wire up every project screenshot that is NOT inside .art-showcase
+    document.querySelectorAll('.project-screenshot').forEach(function (fig) {
+      if (fig.closest('.art-showcase')) return;
+      var img = fig.querySelector('img');
+      if (!img) return;
+
+      // Wrap img in tilt container
+      var wrap = document.createElement('div');
+      wrap.className = 'tilt-wrap';
+      img.parentNode.insertBefore(wrap, img);
+      wrap.appendChild(img);
+
+      // "View Image" overlay label
+      var overlay = document.createElement('div');
+      overlay.className = 'tilt-overlay';
+      overlay.textContent = 'View Image';
+      wrap.appendChild(overlay);
+
+      // Tilt on mouse move — no transition so it tracks the cursor live
+      wrap.addEventListener('mousemove', function (e) {
+        wrap.style.transition = 'transform 0.05s linear';
+        var rect = wrap.getBoundingClientRect();
+        var nx   = (e.clientX - rect.left)  / rect.width  - 0.5; // -0.5 → 0.5
+        var ny   = (e.clientY - rect.top)   / rect.height - 0.5;
+        var rotY =  nx * MAX_TILT * 2;
+        var rotX = -ny * MAX_TILT * 2;
+        wrap.style.transform =
+          'perspective(700px) rotateX(' + rotX + 'deg) rotateY(' + rotY + 'deg) scale(1.025)';
+      });
+
+      // Smooth return on leave
+      wrap.addEventListener('mouseleave', function () {
+        wrap.style.transition = 'transform 0.5s ease';
+        wrap.style.transform  = 'perspective(700px) rotateX(0deg) rotateY(0deg) scale(1)';
+      });
+
+      // Click → open lightbox
+      wrap.addEventListener('click', function () {
+        lbImg.src = img.src;
+        lb.style.display = 'flex';
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            lb.classList.add('lb-visible');
+          });
+        });
+      });
+    });
+  }());
+  </script>
 
   <!-- ============================================================
        SKY SCENE ANIMATION (NEW)
